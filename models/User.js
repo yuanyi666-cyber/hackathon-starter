@@ -42,6 +42,15 @@ const userSchema = new mongoose.Schema(
       website: String,
       picture: String,
     },
+
+    loginHistory: [
+      {
+        loginTime: { type: Date, default: Date.now },
+        loginMethod: String,
+        ip: String,
+        userAgent: String
+      }
+    ]
   },
   { timestamps: true },
 );

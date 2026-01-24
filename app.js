@@ -209,6 +209,7 @@ app.post('/account/password', passportConfig.isAuthenticated, userController.pos
 app.post('/account/delete', passportConfig.isAuthenticated, userController.postDeleteAccount);
 app.post('/account/logout-everywhere', passportConfig.isAuthenticated, userController.postLogoutEverywhere);
 app.get('/account/unlink/:provider', passportConfig.isAuthenticated, userController.getOauthUnlink);
+app.get('/account/login-history', passportConfig.isAuthenticated, userController.getLoginHistory);
 
 /**
  * API examples routes.
@@ -287,35 +288,43 @@ app.get('/auth/failure', (req, res) => {
  * OAuth authentication routes. (Sign in)
  */
 app.get('/auth/facebook', passport.authenticate('facebook'));
-app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/facebook/callback', passport.authenticate('facebook', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'facebook');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/github', passport.authenticate('github'));
-app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/github/callback', passport.authenticate('github', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'github');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/google', passport.authenticate('google'));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'google');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/x', passport.authenticate('X'));
-app.get('/auth/x/callback', passport.authenticate('X', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/x/callback', passport.authenticate('X', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'x');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/linkedin', passport.authenticate('linkedin'));
-app.get('/auth/linkedin/callback', passport.authenticate('linkedin', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/linkedin/callback', passport.authenticate('linkedin', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'linkedin');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/microsoft', passport.authenticate('microsoft'));
-app.get('/auth/microsoft/callback', passport.authenticate('microsoft', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/microsoft/callback', passport.authenticate('microsoft', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'microsoft');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/twitch', passport.authenticate('twitch'));
-app.get('/auth/twitch/callback', passport.authenticate('twitch', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/twitch/callback', passport.authenticate('twitch', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'twitch');
   res.redirect(req.session.returnTo || '/');
 });
 app.get('/auth/discord', passport.authenticate('discord'));
-app.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/auth/failure' }), (req, res) => {
+app.get('/auth/discord/callback', passport.authenticate('discord', { failureRedirect: '/auth/failure' }), async (req, res) => {
+  await userController.recordLoginHistory(req.user, req, 'discord');
   res.redirect(req.session.returnTo || '/');
 });
 
