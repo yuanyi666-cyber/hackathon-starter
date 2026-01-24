@@ -1,0 +1,24 @@
+extends ../layout
+
+block content
+  .pb-2.mt-2.mb-4.border-bottom
+    h3 Login History
+
+  if loginHistory.length === 0
+    .alert.alert-info
+      | No login history found.
+  else
+    table.table.table-striped
+      thead
+        tr
+          th Login Time
+          th Login Method
+          th IP Address
+          th User Agent
+      tbody
+        each entry in loginHistory
+          tr
+            td= entry.loginTime.toLocaleString()
+            td= entry.loginMethod
+            td= entry.ip
+            td= entry.userAgent
