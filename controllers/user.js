@@ -7,6 +7,23 @@ const Session = require('../models/Session');
 const nodemailerConfig = require('../config/nodemailer');
 
 /**
+ * Record login history for a user
+ */
+exports.recordLoginHistory = async function recordLoginHistory(user, req, loginMethod) {
+  user.loginHistory.unshift({
+    loginTime: new Date(),
+    loginMethod: loginMethod,
+    ip: req.ip,
+    userAgent: req.get('User-Agent')
+  });
+  // Keep only last 20 records
+  if (user.loginHistory.length > 20) {
+    user.loginHistory = user.loginHistory.slice(0, 20);
+  }
+  await user.save();
+}
+
+/**
  * GET /login
  * Login page.
  */
@@ -91,7 +108,7 @@ Thank you!\n`,
     req.flash('errors', 'Password cannot be blank.');
     return res.redirect('/login');
   }
-  passport.authenticate('local', (err, user, info) => {
+  passport.authenticate('local', async (err, user, info) => {
     if (err) {
       return next(err);
     }
@@ -99,6 +116,8 @@ Thank you!\n`,
       req.flash('errors', info);
       return res.redirect('/login');
     }
+    // Record login history
+     await recordLoginHistory(user, req, 'email');
     req.logIn(user, (err) => {
       if (err) {
         return next(err);
@@ -427,7 +446,9 @@ exports.getLoginByEmail = async (req, res, next) => {
     }
 
     user.emailVerified = true; // Mark email as verified since they also proved ownership
-    await user.save();
+    
+    // Record login history
+     await recordLoginHistory(user, req, 'email-link');
 
     req.logIn(user, (err) => {
       if (err) {
@@ -499,10 +520,19 @@ exports.getVerifyEmailToken = async (req, res, next) => {
     req.flash('success', { msg: 'Thank you for verifying your email address.' });
     return res.redirect('/account');
   } catch (err) {
-    console.log('Error saving the user profile to the database after email verification', err);
-    req.flash('errors', { msg: 'There was an error verifying your email. Please try again.' });
-    return res.redirect('/account');
+    next(err);
   }
+};
+
+/**
+ * GET /account/login-history
+ * Login history page.
+ */
+exports.getLoginHistory = (req, res) => {
+  res.render('account/login-history', {
+    title: 'Login History',
+    loginHistory: req.user.loginHistory
+  });
 };
 
 /**
