@@ -150,8 +150,14 @@ async function saveOAuth2UserTokens(req, accessToken, refreshToken, accessTokenE
  */
 async function recordOAuthLoginHistory(user, provider, req) {
   try {
-    if (user && user._id) {
-      await LoginHistory.recordLogin(user._id, provider.toLowerCase(), req.ip, req.get('User-Agent') || 'Unknown');
+    if (!user || !user._id) return;
+    if (!req || typeof req !== 'object' || typeof req.get !== 'function') return;
+    await LoginHistory.recordLogin(
+      user._id,
+      provider.toLowerCase(),
+      req.ip,
+      req.get('User-Agent') || 'Unknown',
+    );
     }
   } catch (error) {
     console.error(`Failed to record ${provider} login history:`, error);
@@ -767,11 +773,17 @@ passport.use(
       returnURL: `${process.env.BASE_URL}/auth/steam/callback`,
       profile: true,
       state: generateState(),
+      passReqToCallback: true,
     },
     async (req, identifier, profile, done) => {
-      const steamId = identifier.match(/\d+$/)[0];
-      const profileURL = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${process.env.STEAM_KEY}&steamids=${steamId}`;
       try {
+        const steamIdMatch = typeof identifier === 'string' ? identifier.match(/\d+$/) : null;
+        if (!steamIdMatch) {
+          throw new Error('Invalid Steam identifier');
+        }
+        const steamId = steamIdMatch[0];
+        const profileURL = `http://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${process.env.STEAM_KEY}&steamids=${steamId}`;
+
         if (req.user) {
           const existingUser = await User.findOne({ steam: { $eq: steamId } });
           if (existingUser && existingUser.id !== req.user.id) {
@@ -794,6 +806,7 @@ passport.use(
             user.profile.name = user.profile.name || profileData.personaname;
             user.profile.picture = user.profile.picture || profileData.avatarmedium;
             await user.save();
+            await recordOAuthLoginHistory(user, 'steam', req);
             return done(null, user);
           } catch (err) {
             console.log(err);
@@ -815,6 +828,7 @@ passport.use(
             user.profile.name = profileData.personaname;
             user.profile.picture = profileData.avatarmedium;
             await user.save();
+            await recordOAuthLoginHistory(user, 'steam', req);
             return done(null, user);
           } catch (err) {
             return done(err, null);
