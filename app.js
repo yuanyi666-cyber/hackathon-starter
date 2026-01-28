@@ -279,9 +279,9 @@ app.get('/auth/failure', (req, res) => {
   const redirectTarget = baseReturnTo || returnTo;
 
   if (!redirectTarget || !isSafeRedirect(redirectTarget) || redirectTarget === req.originalUrl || redirectTarget.startsWith('/auth/')) {
-    return res.redirect('/');
+    res.redirect('/');
   }
-  return res.redirect(redirectTarget);
+  res.redirect(redirectTarget);
 });
 
 /**
@@ -353,7 +353,7 @@ if (process.env.NODE_ENV === 'development') {
   // only use in development
   app.use(errorHandler());
 } else {
-  app.use((err, req, res, next) => {
+  app.use((err, req, res) => {
     console.error(err);
     res.status(500).send('Server Error');
   });
